@@ -1,10 +1,28 @@
 
 import logging
 import optparse
+import os
 
 import sloelib
 
+from sloegeneratecfg import SloeGenerateCfg
+
 class SloeApp:
+  def get_treename(self, tree):
+    return "tree_" + tree
+
+  def get_primary_treepaths(self, tree):
+    treeroot = self.config.get(self.get_treename(tree), "treeroot")
+    name =  self.config.get(self.get_treename(tree), "name")
+    retval = {}
+    for worth in ("precious", "derived"):
+      retval[worth] = os.path.join(treeroot, "primary", worth, name)
+    return retval
+      
+
+  def get_global(self, name):
+    return self.config.get("global", name)
+
 
   def enter(self):
   
@@ -28,8 +46,7 @@ class SloeApp:
       raise sloelib.SloeError("Invalid loglevel in config")
     logging.getLogger().setLevel(self.loglevel)
     
-    if self.loglevel <= logging.DEBUG:
-      logging.info(self.config.dump())
+    logging.debug(self.config.dump())
     
     if len(self.args) == 0:
       parser.error("Please supply a command argument")
@@ -44,4 +61,6 @@ class SloeApp:
       
       
   def generate_cfg(self):
-    pass 
+    handler = SloeGenerateCfg(self)
+    handler.enter(self.params)
+    

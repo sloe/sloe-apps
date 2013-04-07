@@ -8,8 +8,6 @@ import sloelib
 
 from sloeapp import SloeApp
 
-sloeapp = None
 if __name__ == "__main__":
-  sloeapp = SloeApp()
-  sloeapp.enter()
+  SloeApp().enter()
   
