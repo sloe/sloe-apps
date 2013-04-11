@@ -6,28 +6,30 @@ from pprint import pprint
 import re
 import subprocess
 
-from sloeitem import SloeItem
+import sloelib
 
 class SloeGenerateCfg:
   def __init__(self, app):
     self.app = app
+    self.glb_cfg = sloelib.SloeConfig.get_global()
 
-  def enter(self, trees):
-    for tree in trees:
-      self.process_tree(tree)
+  def enter(self, tree_names):
+    for tree_name in tree_names:
+      self.process_tree(tree_name)
       
-  def process_tree(self, tree):
-    for worth, walkroot in self.app.get_primary_treepaths(tree).iteritems():
+      
+  def process_tree(self, tree_name):
+  
+    for worth, walkroot in self.app.get_primary_treepaths(tree_name).iteritems():
       logging.debug("generate_cfg walking tree directory %s" % walkroot)
 
       for root, dirs, files in os.walk(walkroot):
         for file in files:
-          print file
           match = re.match(r"^(.*)\.(flv|mp4|f4v)$", file)
           if match:
             spec = {
               "name" : match.group(1),
-              "tree" : tree,
+              "tree" : tree_name,
               "subtree" : os.path.relpath(root, walkroot),
               "worth" : worth,
               "filepath" : os.path.join(root, file),
@@ -35,14 +37,16 @@ class SloeGenerateCfg:
             }
             self.process_file(spec)
   
+  
   def process_file(self, spec):
     logging.debug("Processing file with spec %s" % repr(spec))
       
-    item = SloeItem()
+    item = sloelib.SloeItem()
     item.create_new(spec)
     self.detect_video_params(item)
-    logging.debug(item.dump())
-    item.savetofile()
+    if not self.glb_cfg.get_option("dryrun"):
+      item.savetofile()
+
     
   def detect_video_params(self, item):
     command = [

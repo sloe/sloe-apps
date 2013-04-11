@@ -23,6 +23,27 @@ class SloeTree:
     return self.spec["uuid"]
 
 
+  def find_in_tree(self, test_fn):
+    def recurse(candidate, found):
+      for key, value in candidate.iteritems():
+        if isinstance(key, uuid.UUID):
+          if test_fn(value):
+            return value
+        else:
+          found = recurse(value, found)
+          if found:
+            break
+      return found
+    return recurse(self.treedata, None)
+
+
+  def get_item_from_name_subtree(self, name, subtree):
+    def test(item_dict):
+      # print "Testins %s = %s and %s = %s" % (item_dict["name"], name, item_dict["subtree"], subtree)
+      return (item_dict["name"] == name and item_dict["subtree"] == subtree)
+    return self.find_in_tree(test)
+    
+      
   def make(self):
     if not self.loaded:
       self.load()
@@ -48,6 +69,7 @@ class SloeTree:
             elif self.ini_regex.match(filename):
               logging.warning("Suspicious misnamed(?) .ini file %s" % os.path.join(root, filename))
         logging.info("Loaded %d item (%d MB) records from %s" % (filecount, bytecount / 2**20, subdir_path))       
+
   
   def add_from_ini(self, root, subtree, filename, name, filename_uuid):
     full_path = os.path.join(root, subtree, filename)
@@ -87,13 +109,17 @@ class SloeTree:
 
       target_dict = self.treedata
       for dir in data["subtree"].split("/"):
-        if dir not in self.treedata:
+        if dir not in target_dict:
           target_dict[dir] = {}
         target_dict = target_dict[dir]
    
-      target_dict[uuid.UUID(data["uuid"])] = data
+      id_uuid = uuid.UUID(data["uuid"])
+      target_dict[id_uuid] = data
+
       return filesize
    
   def __repr__(self):
     return ("SloeTree.spec=" + pformat(self.spec) +
-      "\nSloeTree.loaded=" + pformat(self.loaded))
+      "\nSloeTree.loaded=" + pformat(self.loaded) +
+      "\nSloeTree.treedata=" + pformat(self.treedata))
+      

@@ -26,15 +26,14 @@ class SloeTrees:
     
     
   def get_tree(self, tree_name):
-    tree_uuid = self.tree_uuids.get(tree_name, None) or self.load_tree(tree_name)
+    tree_uuid = self.tree_uuids.get(tree_name, None) or self._load_tree(tree_name)
     return self.trees[tree_uuid]
-    
+
   
-  def create_tree(self, tree_name):
+  def _create_tree(self, tree_name):
     logging.debug("Loading tree %s" % tree_name)
     
     glb_cfg = SloeConfig.get_global()
-    print glb_cfg.dump()
     tree_spec = glb_cfg.get_section(self.get_tree_key(tree_name))
     tree_spec["name"] = tree_name
     new_tree = SloeTree(tree_spec)
@@ -43,8 +42,8 @@ class SloeTrees:
     return new_tree
     
     
-  def load_tree(self, tree_name):
-    created_tree = self.create_tree(tree_name)
+  def _load_tree(self, tree_name):
+    created_tree = self._create_tree(tree_name)
     created_tree.make()
     return created_tree.get_tree_uuid()
    

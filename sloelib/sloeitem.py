@@ -2,8 +2,11 @@
 from ConfigParser import ConfigParser
 import logging
 import os
+import sys
 from pprint import pprint, pformat
 import uuid
+
+from sloetrees import SloeTrees
 
 class SloeItem:
   def __init__(self):
@@ -11,9 +14,23 @@ class SloeItem:
     
     
   def create_new(self, spec):
+    
+    current_tree = SloeTrees.inst().get_tree(spec["tree"])
+    source = current_tree.get_item_from_name_subtree(spec["name"], spec["subtree"])
+    
+    if source:
+      # Preserve UUID of item
+      self.data["uuid"] = source["uuid"]
+    else:
+      # No pre-existing item, so take all info from passed-in spec
+      source = spec
+      self.data["uuid"] = uuid.uuid4()
+    
     for element in ("name", "tree", "subtree", "worth", "filepath"):
-      self.data[element] = spec[element]
-    self.data["uuid"] = uuid.uuid4()
+      if source[element] != spec[element]:
+        logging.error("Mismatched original item: element %s new %s !=  old %s" % (
+          element, spec[element], source[element]))
+      self.data[element] = source[element]
  
  
   def get_key(self):
@@ -36,7 +53,6 @@ class SloeItem:
     for name, value in self.data.iteritems():
       parser.set(section, name, '"%s"' % str(value))
     
-    logging.info("Path: %s" % self.get_ini_filepath())
     with open(self.get_ini_filepath(), "wb") as file:
       parser.write(file)
       

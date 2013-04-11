@@ -10,6 +10,7 @@ class SloeConfig:
   
   def __init__(self):
     self.reset()
+    self.opt = None
 
   
   @classmethod
@@ -61,6 +62,14 @@ class SloeConfig:
     return self.get_section(section)[name]
   
   
+  def set_options(self, opt):
+    self.options = opt
+  
+  
+  def get_option(self, name):
+    return getattr(self.options, name)
+    
+  
   def dump(self):
     message = ""
     for section in ["DEFAULT"] + self.parser.sections():
@@ -68,7 +77,7 @@ class SloeConfig:
       for name, value in self.parser.items(section):
         if not name.startswith("_"):
           message += "%s=%s\n" % (name, value)
-    print "***"
+
     self.remake_data()
     message += pformat(self.data)
     return message

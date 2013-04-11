@@ -31,6 +31,9 @@ class SloeApp:
     glb_cfg = sloelib.SloeConfig.get_global()
   
     parser = optparse.OptionParser("usage: %prog [options] command")
+    parser.add_option("-z", "--dryrun",
+                  action="store_true", dest="dryrun", default=False,
+                  help="perform functions but do not write files")
     (self.options, self.args) = parser.parse_args()
     self.params = self.args[1:]
     logging.basicConfig()
@@ -49,6 +52,8 @@ class SloeApp:
     else:
       raise sloelib.SloeError("Invalid loglevel in config")
     logging.getLogger().setLevel(self.loglevel)
+    
+    glb_cfg.set_options(self.options)
     
     logging.debug(glb_cfg.dump())
     
