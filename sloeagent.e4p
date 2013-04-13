@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Project SYSTEM "Project-4.6.dtd">
+<!-- eric4 project file for project sloeagent -->
+<!-- Saved: 2013-04-13, 13:42:42 -->
+<!-- Copyright (C) 2013 ,  -->
+<Project version="4.6">
+  <Language>en</Language>
+  <ProgLanguage mixed="0">Python</ProgLanguage>
+  <ProjectType>Console</ProjectType>
+  <Description></Description>
+  <Version>0.1</Version>
+  <Author></Author>
+  <Email></Email>
+  <Sources>
+    <Source>sloeagent/sloeagent.py</Source>
+    <Source>sloeagent/sloeapp.py</Source>
+    <Source>sloeagent/__init__.py</Source>
+    <Source>sloeagent/sloegeneratecfg.py</Source>
+    <Source>sloeagent/sloeverifytree.py</Source>
+    <Source>sloelib/sloeitem.py</Source>
+    <Source>sloelib/__init__.py</Source>
+    <Source>sloelib/sloeerror.py</Source>
+    <Source>sloelib/sloeconfig.py</Source>
+    <Source>sloelib/sloetrees.py</Source>
+    <Source>sloelib/sloetree.py</Source>
+    <Source>sloeagent/config.cfg</Source>
+    <Source>sloeagent/sloedumptree.py</Source>
+  </Sources>
+  <Forms>
+  </Forms>
+  <Translations>
+  </Translations>
+  <Resources>
+  </Resources>
+  <Interfaces>
+  </Interfaces>
+  <Others>
+  </Others>
+  <MainScript>sloeagent/sloeagent.py</MainScript>
+  <Vcs>
+    <VcsType>None</VcsType>
+  </Vcs>
+  <FiletypeAssociations>
+    <FiletypeAssociation pattern="*.pyw" type="SOURCES" />
+    <FiletypeAssociation pattern="*.idl" type="INTERFACES" />
+    <FiletypeAssociation pattern="*.py" type="SOURCES" />
+    <FiletypeAssociation pattern="*.ptl" type="SOURCES" />
+  </FiletypeAssociations>
+</Project>

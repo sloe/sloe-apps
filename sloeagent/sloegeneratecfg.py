@@ -2,7 +2,7 @@
 import json
 import logging
 import os
-from pprint import pprint
+from pprint import pprint, pformat
 import re
 import subprocess
 
@@ -16,11 +16,15 @@ class SloeGenerateCfg:
   def enter(self, tree_names):
     for tree_name in tree_names:
       self.process_tree(tree_name)
-      
-      
+
+
   def process_tree(self, tree_name):
-  
-    for worth, walkroot in self.app.get_primary_treepaths(tree_name).iteritems():
+    if self.glb_cfg.get_option("final"):
+      primacy = "final"
+    else:
+      primacy = "primary"
+
+    for worth, walkroot in sloelib.SloeTrees.inst().get_treepaths(primacy,  tree_name).iteritems():
       logging.debug("generate_cfg walking tree directory %s" % walkroot)
 
       for root, dirs, files in os.walk(walkroot):
@@ -28,34 +32,37 @@ class SloeGenerateCfg:
           match = re.match(r"^(.*)\.(flv|mp4|f4v)$", file)
           if match:
             spec = {
+              "leafname" : file,
               "name" : match.group(1),
+              "primacy" : primacy,
               "tree" : tree_name,
               "subtree" : os.path.relpath(root, walkroot),
-              "worth" : worth,
-              "filepath" : os.path.join(root, file),
-              "primacy" : "primary"
+              "worth" : worth
             }
             self.process_file(spec)
-  
-  
+
+
   def process_file(self, spec):
     logging.debug("Processing file with spec %s" % repr(spec))
-      
+
     item = sloelib.SloeItem()
     item.create_new(spec)
     self.detect_video_params(item)
     if not self.glb_cfg.get_option("dryrun"):
       item.savetofile()
 
-    
+
   def detect_video_params(self, item):
     command = [
       self.app.get_global("ffprobe"),
-      item.data["filepath"],
+      item.get_filepath(),
       "-print_format", "json", "-show_format", "-show_streams"]
-      
+
     p = subprocess.Popen(command, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
     (json_out, stderr) = p.communicate()
+    if p.returncode != 0:
+      logging.error("ffprobe failed (rc=%d)\n%s" % (p.returncode, stderr))
+      raise sloelib.SloeError("ffprobe failed (rc-%d)" % p.returncode)
     ffinfo = json.loads(json_out)
     for stream in ffinfo["streams"]:
       if stream["codec_type"] == "video":
@@ -67,7 +74,11 @@ class SloeGenerateCfg:
           if name in stream:
             item.data["audio_" + name] = stream[name]
       else:
-        logging.error("Unknown stream %s" % stream["codec_type"])
+        handler_name = stream.get("tags", {}).get("handler_name", "")
+        if handler_name == "Timed Metadata Handler":
+          logging.debug("Ignoring Timed Metadata Handler stream")
+        else:
+          logging.error("Ignoring unknown stream %s" % pformat(stream))
     for name in ("format_name", "format_long_name", "size", "bit_rate"):
       if name in ffinfo["format"]:
         item.data["video_" + name] = ffinfo["format"][name]

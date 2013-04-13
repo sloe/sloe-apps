@@ -1,5 +1,8 @@
 # Editor files
 *~
 
+# Eric4 project directories
+.eric4project
+
 # Python compiled files
 *.pyc
