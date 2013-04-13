@@ -7,6 +7,7 @@ import sloelib
 
 from sloedumptree import SloeDumpTree
 from sloegeneratecfg import SloeGenerateCfg
+from sloeupdateg3 import SloeUpdateG3
 from sloeverifytree import SloeVerifyTree
 
 class SloeApp:
@@ -50,7 +51,7 @@ class SloeApp:
     if len(self.args) == 0:
       parser.error("Please supply a command argument")
     else:
-      valid_commands = ("dump_tree", "generate_cfg", "verify_tree")
+      valid_commands = ("dump_tree", "generate_cfg", "update_g3", "verify_tree")
       command = self.args[0]
       if command not in valid_commands:
         parser.error("Command not valid - must be one of %s" % ", ".join(valid_commands))
@@ -67,6 +68,12 @@ class SloeApp:
   def generate_cfg(self):
     handler = SloeGenerateCfg(self)
     handler.enter(self.params)
+
+
+  def update_g3(self):
+    handler = SloeUpdateG3(self)
+    handler.enter(self.params)
+
 
   def verify_tree(self):
     handler = SloeVerifyTree(self)

@@ -116,7 +116,10 @@ class SloeTree:
       if not primacy in self.treedata:
         logging.debug("Creating primacy tree %s", primacy)
         self.treedata[primacy] = {}
-      target_dict = self.treedata[primacy]
+      if not self.spec["name"] in self.treedata[primacy]:
+        logging.debug("Creating toplevel tree %s", self.spec["name"] )
+        self.treedata[primacy][self.spec["name"]] = {}
+      target_dict = self.treedata[primacy][self.spec["name"] ]
       for dir in data["subtree"].split("/"):
         if dir not in target_dict:
           target_dict[dir] = {}
