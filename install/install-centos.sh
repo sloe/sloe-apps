@@ -1,6 +1,9 @@
 #!/bin/bash
 
-yum_cache="-C"
+yum_cache=
+# For development only
+# yum_cache="-C"
+
 installpath=`dirname "$0"`
 wssloepath=`dirname "$installpath"`
 sitepath=`dirname "$wssloepath"`
@@ -30,7 +33,8 @@ fi
 
 rpm -ivh "/tmp/$nginxfile"
 
-yum install -y $yum_cache php php-mbstring php-mysql php-fpm nginx phpMyAdmin GraphicsMagick ffmpeg
+yum install -y $yum_cache mysql-server php php-mbstring php-mysql php-fpm nginx phpMyAdmin GraphicsMagick ffmpeg
+chkconfig mysqld on
 chkconfig php-fpm on
 chkconfig nginx on
 
@@ -59,8 +63,10 @@ default="/etc/nginx/conf.d/default.conf"
 if [ -f "$default" ] ; then
   disabled="/etc/nginx/conf.d.disabled"
   echo Moving nginx default.conf to $disabled
-  mkdir "$disabled"
-  mv "$default" "$disabled"
+  if [ ! -d "$disabled" ] ; then
+    mkdir "$disabled"
+  fi
+  mv -f "$default" "$disabled"
 fi
 
 if [ ! -L "$sitepath/sql_admin" ] ; then
@@ -68,6 +74,7 @@ if [ ! -L "$sitepath/sql_admin" ] ; then
   ln -s /usr/share/phpMyAdmin "$sitepath/sql_admin"
 fi
 
+service mysqld start
 service php-fpm restart
 service nginx restart
 

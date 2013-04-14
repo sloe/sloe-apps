@@ -4,6 +4,4 @@ php_admin_value[date.timezone] = Europe/London
 php_admin_value[memory_limit] = 512M
 php_admin_value[post_max_size] = 512M
 php_admin_value[upload_max_filesize] = 512M
-
-user = nginx
-group = nginx
+php_admin_value[short_open_tag] = On
