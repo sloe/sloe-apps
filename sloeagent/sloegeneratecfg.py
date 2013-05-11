@@ -45,8 +45,10 @@ class SloeGenerateCfg:
   def process_file(self, spec):
     logging.debug("Processing file with spec %s" % repr(spec))
 
+    current_tree = sloelib.SloeTrees.inst().get_tree(spec["tree"])
+    existing_item = current_tree.get_item_from_spec(spec)
     item = sloelib.SloeItem()
-    item.create_new(spec)
+    item.create_new(existing_item, spec)
     self.detect_video_params(item)
     if not self.glb_cfg.get_option("dryrun"):
       item.savetofile()

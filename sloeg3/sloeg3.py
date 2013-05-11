@@ -12,6 +12,16 @@ try:
 except:
     g_libg3_present = False
 
+class SloeEmptyLocalMovie(libg3.LocalMovie):
+    def __init__(self, *args):
+        libg3.LocalMovie.__init__(self, *args)
+        self.contentType = "application/octet-stream"
+
+    def getFileContents(self):
+        logging.info("Returning empty file contents")
+        return ""
+
+
 class SloeG3:
     def __init__(self):
         if not g_libg3_present:
@@ -44,13 +54,18 @@ class SloeG3:
         return parent_album.addAlbum(album_name, album_name, album_name)
 
 
+    def get_or_create_item(self, album, keys, item):
+        g3item = SloeEmptyLocalMovie(item.get_filepath(), False)
+        self.gal.addMovie(album, g3item, title="title", description="description", name=item.data["leafname"])
+
+
     def reconcile_to_g3tree(self, tree_name):
         def recurse_album(treedata, sloe_subtree, g3_album):
             for key in sorted(treedata.keys()):
                 value = treedata[key]
                 if isinstance(key, uuid.UUID):
-                    pass
-                    # logging.debug("Found item %s" % str(value))
+                    self.get_or_create_item(g3_album, sloe_subtree + [key], value)
+
                 if isinstance(key, types.StringType) or isinstance(key, types.UnicodeType) :
                     sub_album = self.get_or_create_album(g3_album, key)
                     recurse_album(value, sloe_subtree + [key], sub_album)
@@ -60,7 +75,6 @@ class SloeG3:
 
     def update_tree(self, tree_name):
         self.connect()
-
         self.sloe_tree = sloelib.SloeTrees.inst().get_tree(tree_name)
         self.reconcile_to_g3tree(tree_name)
 
