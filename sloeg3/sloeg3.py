@@ -8,18 +8,52 @@ import sloelib
 
 try:
     import libg3
+    # from G3Items import getItemFromResp , getItemsFromResp , BaseRemote , Album , RemoteImage , Tag
     g_libg3_present = True
 except:
     g_libg3_present = False
 
 class SloeEmptyLocalMovie(libg3.LocalMovie):
-    def __init__(self, *args):
-        libg3.LocalMovie.__init__(self, *args)
+    def __init__(self, *args, **kwargs):
+        libg3.LocalMovie.__init__(self, *args, **kwargs)
         self.contentType = "application/octet-stream"
 
     def getFileContents(self):
         logging.info("Returning empty file contents")
         return ""
+
+
+class SloeGallery3(libg3.Gallery3):
+    def __init__(self, *args, **kwargs):
+        libg3.Gallery3.__init__(self, *args, **kwargs)
+
+    def updateItem(self , item):
+        """
+        Updates a remote item's title and description
+
+        item(BaseRemote)        : An item descended from BaseRemote
+
+        returns(tuple(status , msg))    : Returns a tuple of a boolean status
+                                          and a message if there is an error
+        """
+        if not item.can_edit:
+            raise G3AuthError('You do not have permission to edit: %s' %
+                item.title)
+        try:
+            self._isItemValid(item, libg3.G3Items.BaseRemote)
+        except Exception , e:
+            return (False , str(e))
+        data = {
+            'title': item.title,
+            'description': item.description,
+            'sloe_uuid': item.sloe_uuid,
+        }
+        req = libg3.Requests.PutRequest(item.url , self.apiKey , data)
+        try:
+            resp = self._openReq(req)
+        except libg3.Errors.G3RequestError , e:
+            return (False , str(e))
+        return (True , '')
 
 
 class SloeG3:
@@ -34,7 +68,7 @@ class SloeG3:
         apikey = self.glb_cfg.get("gallery3", "apikey")
         hostname = self.glb_cfg.get("gallery3", "hostname")
         g3base = self.glb_cfg.get("gallery3", "g3base")
-        self.gal = libg3.Gallery3(hostname , apikey , g3Base=g3base)
+        self.gal = SloeGallery3(hostname , apikey , g3Base=g3base)
         if self.gal is None:
             raise sloelib.SloeError("Failed to connect to gallery3")
         try:
@@ -55,8 +89,24 @@ class SloeG3:
 
 
     def get_or_create_item(self, album, keys, item):
-        g3item = SloeEmptyLocalMovie(item.get_filepath(), False)
-        self.gal.addMovie(album, g3item, title="title", description="description", name=item.data["leafname"])
+        #pprint(item.__dict__)
+        movies = album.getMovies()
+        remote_movie = None
+        for movie in movies:
+            if movie.sloe_uuid == item.data["uuid"]:
+                remote_movie = movie
+                break
+
+        if remote_movie is None:
+            logging.debug("Movie %s does not exist - creating" % item.data["leafname"])
+            g3item = SloeEmptyLocalMovie(item.get_filepath(), False)
+            remote_movie = self.gal.addMovie(album, g3item, title="title", description="description", name=item.data["leafname"])
+
+        remote_movie.sloe_uuid = item.data["uuid"]
+        status, message = self.gal.updateMovie(remote_movie)
+
+        if not status:
+            logging.error("Failed to update g3 movie: %s" % message)
 
 
     def reconcile_to_g3tree(self, tree_name):
