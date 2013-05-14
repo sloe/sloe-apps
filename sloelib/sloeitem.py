@@ -7,30 +7,33 @@ from pprint import pprint, pformat
 import uuid
 
 from sloeconfig import SloeConfig
+from sloeerror import SloeError
+from sloetreenode import SloeTreeNode
 
 
-class SloeItem:
+class SloeItem(SloeTreeNode):
     MANDATORY_ELEMENTS = ("leafname", "name", "primacy", "tree", "subtree", "worth")
 
     def __init__(self):
-        self.data = {}
+        SloeTreeNode.__init__(self, "item")
+        self._d = {}
 
     def create_new(self, existing_item, spec):
-        self.data = {}
+        self._d = {}
 
         if existing_item:
             # Preserve UUID of item
-            self.data["uuid"] = existing_item.data["uuid"]
+            self._d["uuid"] = existing_item._d["uuid"]
         else:
             # No pre-existing item, so take all info from passed-in spec
-            self.data["uuid"] = uuid.uuid4()
+            self._d["uuid"] = uuid.uuid4()
 
         for element in self.MANDATORY_ELEMENTS:
-            if existing_item is not None and existing_item.data[element] != spec[element]:
+            if existing_item is not None and existing_item._d[element] != spec[element]:
                 logging.error("Mismatched original item: element %s new %s !=  old %s" % (
                     element, spec[element], existing_item[element]))
             # print "%s %s" % (pformat(spec), pformat(existing_item))
-            self.data[element] = spec[element]
+            self._d[element] = spec[element]
 
 
     def create_from_ini_file(self, ini_filepath, error_info):
@@ -46,7 +49,7 @@ class SloeItem:
 
 
     def _create_from_ini_fp(self, ini_fp, error_info):
-        self.data = {}
+        self._d = {}
         parser = ConfigParser.RawConfigParser()
         parser.readfp(ini_fp)
         file_data = {}
@@ -62,38 +65,38 @@ class SloeItem:
         if len(file_data.keys()) != 1:
             raise SloeError("Only one section supported in .ini: %s" % error_info)
 
-        for section, section_data in file_data.iteritems():
-            data = file_data[file_data.keys()[0]]
-            if section != "item" and section != "item-%s" % data["uuid"]:
+        for section, section__d in file_data.iteritems():
+            _d = file_data[file_data.keys()[0]]
+            if section != "item" and section != "item-%s" % _d["uuid"]:
                 raise SloeError("in-file section/uuid mismatch %s != %s in %s" %
-                    (section, "item-%s" % data["uuid"], full_path))
+                    (section, "item-%s" % _d["uuid"], full_path))
 
         missing_elements = []
         for element in self.MANDATORY_ELEMENTS:
-            if element not in data:
+            if element not in _d:
                 missing_elements.append(element)
 
         if len(missing_elements) > 0:
             raise SloeError("Missing elements %s in .ini: %s" % (", ".join(missing_elements), error_info))
 
-        self.data = data
+        self._d = _d
 
 
     def get_file_dir(self):
-        root_dir = SloeConfig.get_global().get_tree_root_dir(self.data["tree"])
-        return os.path.join(root_dir, self.data["primacy"], self.data["worth"], self.data["tree"], self.data["subtree"])
+        root_dir = SloeConfig.get_global().get_tree_root_dir(self._d["tree"])
+        return os.path.join(root_dir, self._d["primacy"], self._d["worth"], self._d["tree"], self._d["subtree"])
 
 
     def get_filepath(self):
-        return os.path.join(self.get_file_dir(), self.data["leafname"])
+        return os.path.join(self.get_file_dir(), self._d["leafname"])
 
 
     def get_key(self):
-        return "item-%s" % str(self.data["uuid"])
+        return "item-%s" % str(self._d["uuid"])
 
 
     def get_ini_leafname(self):
-        return "%s-%s.ini" % (self.data["name"], self.data["uuid"])
+        return "%s-%s.ini" % (self._d["name"], self._d["uuid"])
 
 
     def get_ini_filepath(self):
@@ -105,7 +108,7 @@ class SloeItem:
         parser = ConfigParser.ConfigParser()
         section = self.get_key()
         parser.add_section(section)
-        for name, value in self.data.iteritems():
+        for name, value in self._d.iteritems():
             parser.set(section, name, '"%s"' % str(value))
 
         with open(self.get_ini_filepath(), "wb") as file:
@@ -113,4 +116,4 @@ class SloeItem:
 
 
     def dump(self):
-      return pformat(self.data)
+      return pformat(self._d)

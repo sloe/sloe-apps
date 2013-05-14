@@ -4,14 +4,8 @@ from pprint import pprint, pformat
 import types
 import uuid
 
+import libg3
 import sloelib
-
-try:
-    import libg3
-    # from G3Items import getItemFromResp , getItemsFromResp , BaseRemote , Album , RemoteImage , Tag
-    g_libg3_present = True
-except:
-    g_libg3_present = False
 
 class SloeEmptyLocalMovie(libg3.LocalMovie):
     def __init__(self, *args, **kwargs):
@@ -58,9 +52,6 @@ class SloeGallery3(libg3.Gallery3):
 
 class SloeG3:
     def __init__(self):
-        if not g_libg3_present:
-            raise sloelib.SloeError("Please install libg3 python bindings from https://github.com/"
-                "gallery/gallery3-contrib/tree/master/<version>/client/Python/pylibgal3")
         self.glb_cfg = sloelib.SloeConfig.get_global()
 
 

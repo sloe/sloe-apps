@@ -40,9 +40,9 @@ class SloeTree:
     def get_item_from_spec(self, spec):
         def test(item):
             return (
-                item.data["primacy"] == spec["primacy"] and
-                item.data["subtree"] == spec["subtree"] and
-                item.data["name"] == spec["name"])
+                item.primacy == spec["primacy"] and
+                item.subtree == spec["subtree"] and
+                item.name == spec["name"])
         return self.find_in_tree(test)
 
 
@@ -78,24 +78,24 @@ class SloeTree:
         item = SloeItem.new_from_ini_file(full_path, "SloeTree.add_from_ini: " + full_path)
 
         # Verification
-        if primacy != item.data.get("primacy", ""):
+        if primacy != item.get("primacy", ""):
             raise SloeError("primacy mismatch %s != %s in %s" %
-                (primacy, item.data.get("primacy", "(missing)"), full_path))
+                (primacy, item.get("primacy", "(missing)"), full_path))
         # Don't verify worth - can be changed by moving files
-        if subtree != item.data["subtree"]:
+        if subtree != item.subtree:
             raise SloeError("subtree mismatch %s != %s in %s" %
-                (subtree, item.data["subtree"], full_path))
+                (subtree, item.subtree, full_path))
 
-        if item.data["uuid"] != filename_uuid: # Both are strings
+        if item.uuid != filename_uuid: # Both are strings
             raise SloeError("filename/content uuid mismatch %s != %s in %s" %
-                (item.data["uuid"], filename_uuid, full_path))
+                (item.uuid, filename_uuid, full_path))
 
         filesize = 0
         filestat = os.stat(full_path)
         if os.path.stat.S_ISREG(filestat.st_mode):
             filesize = filestat.st_size
         else:
-            logging.warning("Missing file %s" % data["filepath"])
+            logging.warning("Missing file %s" % full_path)
 
         if not primacy in self.treedata:
             logging.debug("Creating primacy tree %s", primacy)
@@ -103,14 +103,14 @@ class SloeTree:
         if not self.spec["name"] in self.treedata[primacy]:
             logging.debug("Creating toplevel tree %s", self.spec["name"] )
             self.treedata[primacy][self.spec["name"]] = {}
-        target_dict = self.treedata[primacy][self.spec["name"] ]
-        for dir in item.data["subtree"].split("/"):
-            if dir not in target_dict:
-                target_dict[dir] = {}
-            target_dict = target_dict[dir]
+        target_album = self.treedata[primacy][self.spec["name"] ]
+        for dir in item.subtree.split("/"):
+            if dir not in target_album:
+                target_album[dir] = {}
+            target_album = target_album[dir]
 
-        id_uuid = uuid.UUID(item.data["uuid"])
-        target_dict[id_uuid] = item
+        id_uuid = uuid.UUID(item.uuid)
+        target_album[id_uuid] = item
 
         return filesize
 

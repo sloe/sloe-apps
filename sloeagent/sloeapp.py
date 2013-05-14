@@ -7,8 +7,16 @@ import sloelib
 
 from sloedumptree import SloeDumpTree
 from sloegeneratecfg import SloeGenerateCfg
-from sloeupdateg3 import SloeUpdateG3
 from sloeverifytree import SloeVerifyTree
+
+g_startup_log = []
+
+try:
+    import libg3
+    from sloeupdateg3 import SloeUpdateG3
+except ImportError, e:
+    g_startup_log.append("libg3 import failed - disabling Gallery support (%s)" % str(e))
+
 
 class SloeApp:
 
@@ -31,7 +39,7 @@ class SloeApp:
     self.params = self.args[1:]
     logging.basicConfig(format="#%(levelname)s:%(filename)s::%(funcName)s#%(lineno)d at %(asctime)s\n%(message)s")
     glb_cfg = sloelib.SloeConfig.get_global()
-    logging.info("Loading global config file config.cfg")
+    g_startup_log.append("Loading global config file config.cfg")
     glb_cfg.appendfile('config.cfg')
     loglevelstr = glb_cfg.get("global", "loglevel")
     if loglevelstr == 'DEBUG':
@@ -45,7 +53,7 @@ class SloeApp:
     else:
       raise sloelib.SloeError("Invalid loglevel in config")
     logging.getLogger().setLevel(self.loglevel)
-
+    logging.debug("\n".join(g_startup_log))
     glb_cfg.set_options(self.options)
 
     if len(self.args) == 0:

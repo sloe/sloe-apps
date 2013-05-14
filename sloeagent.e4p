@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-4.6.dtd">
 <!-- eric4 project file for project sloeagent -->
-<!-- Saved: 2013-05-08, 23:32:15 -->
+<!-- Saved: 2013-05-14, 07:56:08 -->
 <!-- Copyright (C) 2013 ,  -->
 <Project version="4.6">
   <Language>en</Language>
@@ -27,6 +27,8 @@
     <Source>sloeagent/sloeupdateg3.py</Source>
     <Source>sloeg3/__init__.py</Source>
     <Source>sloeg3/sloeg3.py</Source>
+    <Source>sloelib/sloealbum.py</Source>
+    <Source>sloelib/sloetreenode.py</Source>
   </Sources>
   <Forms>
   </Forms>
