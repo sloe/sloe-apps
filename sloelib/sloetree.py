@@ -5,6 +5,7 @@ import re
 from pprint import pformat, pprint
 import uuid
 
+from sloealbum import SloeAlbum
 from sloeconfig import SloeConfig
 from sloeerror import SloeError
 from sloeitem import SloeItem
@@ -16,7 +17,7 @@ class SloeTree:
     def __init__(self, spec):
         self.spec = spec
         self.loaded = False
-        self.treedata = {}
+        self.treedata = SloeAlbum(None)
 
 
     def get_tree_uuid(self):
@@ -97,21 +98,13 @@ class SloeTree:
         else:
             logging.warning("Missing file %s" % full_path)
 
-        if not primacy in self.treedata:
-            logging.debug("Creating primacy tree %s", primacy)
-            self.treedata[primacy] = {}
-        if not self.spec["name"] in self.treedata[primacy]:
-            logging.debug("Creating toplevel tree %s", self.spec["name"] )
-            self.treedata[primacy][self.spec["name"]] = {}
-        target_album = self.treedata[primacy][self.spec["name"] ]
-        for dir in item.subtree.split("/"):
-            if dir not in target_album:
-                target_album[dir] = {}
-            target_album = target_album[dir]
+        primacy_album = self.treedata.get_or_create_album(primacy)
+        target_album = primacy_album.get_or_create_album(self.spec["name"])
+        for album_name in item.subtree.split("/"):
+            target_album = target_album.get_or_create_album(album_name)
 
         id_uuid = uuid.UUID(item.uuid)
-        target_album[id_uuid] = item
-
+        target_album.add_item(item)
         return filesize
 
     def __repr__(self):

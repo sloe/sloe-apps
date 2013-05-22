@@ -79,39 +79,53 @@ class SloeG3:
         return parent_album.addAlbum(album_name, album_name, album_name)
 
 
+    def sync_movie(self, movie, item):
+        fields = []
+        for dest, value in {
+            "title": item.name
+            }.iteritems():
+            if getattr(movie, dest) != value:
+                setattr(movie, dest, value)
+                fields.append(dest)
+
+        return fields
+
+
     def get_or_create_item(self, album, keys, item):
-        #pprint(item.__dict__)
         movies = album.getMovies()
         remote_movie = None
         for movie in movies:
-            if movie.sloe_uuid == item.data["uuid"]:
+            if movie.sloe_uuid == item.uuid:
                 remote_movie = movie
                 break
 
         if remote_movie is None:
-            logging.debug("Movie %s does not exist - creating" % item.data["leafname"])
+            logging.debug("Movie %s does not exist - creating" % item.leafname)
             g3item = SloeEmptyLocalMovie(item.get_filepath(), False)
-            remote_movie = self.gal.addMovie(album, g3item, title="title", description="description", name=item.data["leafname"])
+            remote_movie = self.gal.addMovie(album, g3item, title="title", description="description", name=item.leafname)
+            remote_movie.sloe_uuid = item.uuid
 
-        remote_movie.sloe_uuid = item.data["uuid"]
-        status, message = self.gal.updateMovie(remote_movie)
+        fields = self.sync_movie(remote_movie, item)
 
-        if not status:
-            logging.error("Failed to update g3 movie: %s" % message)
+        if len(fields) > 0:
+            status, message = self.gal.updateMovie(remote_movie)
+
+            if status:
+                logging.info("Updated %s in item %s" % (", ".join(fields), item.name))
+            else:
+                logging.error("Failed to update g3 movie: %s" % message)
 
 
     def reconcile_to_g3tree(self, tree_name):
-        def recurse_album(treedata, sloe_subtree, g3_album):
-            for key in sorted(treedata.keys()):
-                value = treedata[key]
-                if isinstance(key, uuid.UUID):
-                    self.get_or_create_item(g3_album, sloe_subtree + [key], value)
+        def recurse_album(album, sloe_subtree, g3_album):
+            for item in album.get_items():
+                self.get_or_create_item(g3_album, sloe_subtree, item)
 
-                if isinstance(key, types.StringType) or isinstance(key, types.UnicodeType) :
-                    sub_album = self.get_or_create_album(g3_album, key)
-                    recurse_album(value, sloe_subtree + [key], sub_album)
+            for album in album.get_albums():
+                sub_album = self.get_or_create_album(g3_album, album.name)
+                recurse_album(album, sloe_subtree + [album.name], sub_album)
 
-        recurse_album(self.sloe_tree.treedata.get("final", {}), [], self.g3root)
+        recurse_album(self.sloe_tree.treedata.get_or_create_album("final"), [], self.g3root)
 
 
     def update_tree(self, tree_name):

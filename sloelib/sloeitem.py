@@ -16,23 +16,20 @@ class SloeItem(SloeTreeNode):
 
     def __init__(self):
         SloeTreeNode.__init__(self, "item")
-        self._d = {}
+
 
     def create_new(self, existing_item, spec):
-        self._d = {}
-
         if existing_item:
             # Preserve UUID of item
             self._d["uuid"] = existing_item._d["uuid"]
         else:
-            # No pre-existing item, so take all info from passed-in spec
+            # No pre-existing item, so create new UUID
             self._d["uuid"] = uuid.uuid4()
 
         for element in self.MANDATORY_ELEMENTS:
             if existing_item is not None and existing_item._d[element] != spec[element]:
                 logging.error("Mismatched original item: element %s new %s !=  old %s" % (
                     element, spec[element], existing_item[element]))
-            # print "%s %s" % (pformat(spec), pformat(existing_item))
             self._d[element] = spec[element]
 
 
