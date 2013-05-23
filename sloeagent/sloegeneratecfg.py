@@ -70,11 +70,11 @@ class SloeGenerateCfg:
       if stream["codec_type"] == "video":
         for name in ("codec_name", "width", "height", "pix_fmt", "level", "avg_frame_rate", "duration", "nb_frames"):
           if name in stream:
-            item.data["video_" + name] = stream[name]
+            item.set_value("video_" + name, stream[name])
       elif stream["codec_type"] == "audio":
         for name in ("codec_name", "sample_fmt", "sample_rate", "channels", "duration", "nb_frames"):
           if name in stream:
-            item.data["audio_" + name] = stream[name]
+            item.set_value("audio_" + name, stream[name])
       else:
         handler_name = stream.get("tags", {}).get("handler_name", "")
         if handler_name == "Timed Metadata Handler":
@@ -83,4 +83,4 @@ class SloeGenerateCfg:
           logging.error("Ignoring unknown stream %s" % pformat(stream))
     for name in ("format_name", "format_long_name", "size", "bit_rate"):
       if name in ffinfo["format"]:
-        item.data["video_" + name] = ffinfo["format"][name]
+        item.set_value("video_" + name, ffinfo["format"][name])

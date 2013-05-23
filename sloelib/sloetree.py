@@ -25,15 +25,14 @@ class SloeTree:
 
 
     def find_in_tree(self, test_fn):
-        def recurse(candidate, found):
-            for key, value in candidate.iteritems():
-                if isinstance(value, SloeItem):
-                    if test_fn(value):
-                        return value
-                else:
-                    found = recurse(value, found)
-                    if found:
-                        break
+        def recurse(album, found):
+            for item in album.get_items():
+                if test_fn(item):
+                    return item
+            for album in album.get_albums():
+                found = recurse(album, found)
+                if found:
+                    break
             return found
         return recurse(self.treedata, None)
 
